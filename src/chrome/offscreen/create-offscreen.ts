@@ -7,7 +7,9 @@ let retryCount = 0
 
 export async function createOffscreen() {
   if (!hasOffscreen()) {
-    console.warn('chrome.offscreen is not available; offscreen document will not be created')
+    console.warn(
+      'chrome.offscreen is not available; offscreen document will not be created',
+    )
     return
   }
 

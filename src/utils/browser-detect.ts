@@ -9,9 +9,7 @@ export const hasIdle = (): boolean =>
   chrome.idle.onStateChanged !== undefined
 
 export const hasStorageSession = (): boolean =>
-  isChromeDefined &&
-  chrome.storage !== undefined &&
-  'session' in chrome.storage
+  isChromeDefined && chrome.storage !== undefined && 'session' in chrome.storage
 
 export const hasSystemDisplay = (): boolean =>
   isChromeDefined &&

@@ -5,6 +5,7 @@ import { createChromeHandler } from 'trpc-chrome/adapter'
 import content from '../content-script/content-script?script'
 
 import { createOffscreen } from '../offscreen/create-offscreen'
+import { initWalletRuntime } from '../offscreen/wallet-runtime'
 import { BackgroundMessageHandler } from './message-handler'
 import { createMessage } from '../messages/create-message'
 import { MessageClient } from '../messages/message-client'
@@ -27,7 +28,7 @@ import { createBackgroundRouterContext } from './router/context'
 import { createContentScriptClient } from './router/clients/content-script'
 import { getOffscreenClient } from './router/clients/offscreen'
 import { hasConnections } from 'chrome/helpers/get-connections'
-import { hasIdle } from 'utils/browser-detect'
+import { hasIdle, hasOffscreen } from 'utils/browser-detect'
 
 const logger = utilsLogger.getSubLogger({ name: 'background' })
 
@@ -181,6 +182,10 @@ if (hasIdle()) {
 }
 
 createOffscreen()
+
+if (!hasOffscreen()) {
+  initWalletRuntime()
+}
 
 createChromeHandler({
   router: backgroundRouter,

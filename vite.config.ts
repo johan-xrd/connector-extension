@@ -57,7 +57,7 @@ const manifest = defineManifest(async () => {
       {
         matches,
         js: ['src/chrome/content-script/content-script.ts'],
-        run_at: 'document_idle',
+        run_at: 'document_start',
         all_frames: true,
       },
     ],

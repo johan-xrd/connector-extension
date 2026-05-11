@@ -26,7 +26,9 @@ export const sessionStore = {
     ),
   getSingleItem: (key: string) =>
     ResultAsync.fromPromise(
-      getSessionStorageArea().get(key).then((result) => result[key]),
+      getSessionStorageArea()
+        .get(key)
+        .then((result) => result[key]),
       (error) => error as Error,
     ),
 } as const
