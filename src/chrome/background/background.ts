@@ -5,7 +5,10 @@ import { createChromeHandler } from 'trpc-chrome/adapter'
 import content from '../content-script/content-script?script'
 
 import { createOffscreen } from '../offscreen/create-offscreen'
-import { initWalletRuntime, getWalletRuntime } from '../offscreen/wallet-runtime'
+import {
+  initWalletRuntime,
+  getWalletRuntime,
+} from '../offscreen/wallet-runtime'
 import { BackgroundMessageHandler } from './message-handler'
 import { createMessage } from '../messages/create-message'
 import { MessageClient } from '../messages/message-client'
@@ -99,7 +102,7 @@ const messageHandler = MessageClient(
 
 const handleConnectionsChange = (connections?: Connections) => {
   const msg = createMessage.setConnections('background', connections || {})
-  
+
   if (!hasOffscreen()) {
     getWalletRuntime()?.messageClient.handleMessage(msg)
     setTimeout(() => {
@@ -108,13 +111,11 @@ const handleConnectionsChange = (connections?: Connections) => {
     return
   }
 
-  messageHandler
-    .sendMessageAndWaitForConfirmation(msg)
-    .map(() => {
-      setTimeout(() => {
-        closePopup()
-      }, config.popup.closeDelayTime)
-    })
+  messageHandler.sendMessageAndWaitForConfirmation(msg).map(() => {
+    setTimeout(() => {
+      closePopup()
+    }, config.popup.closeDelayTime)
+  })
 }
 
 const handleNotificationClick = (notificationId: string) => {

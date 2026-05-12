@@ -5,7 +5,17 @@ import { logger } from 'utils/logger'
 import { config, getConnectionConfig } from 'config'
 import { useConnectionsClient } from './state/connections'
 import { useConnectorOptions } from './state/options'
-import { Subscription, combineLatest, filter, map, race, shareReplay, switchMap, tap, timer } from 'rxjs'
+import {
+  Subscription,
+  combineLatest,
+  filter,
+  map,
+  race,
+  shareReplay,
+  switchMap,
+  tap,
+  timer,
+} from 'rxjs'
 import { useNavigate } from 'react-router-dom'
 import { ed25519 } from '@noble/curves/ed25519'
 import { getLinkingSignatureMessage } from 'crypto/get-linking-message'
@@ -106,34 +116,27 @@ export const Pairing = () => {
           return
         }
         const [password, interaction] = result
-        connectionsClient
-          .addOrUpdate(password, interaction)
-          .match(
-            ({ isKnownConnection }) => {
-              if (!isActive || attemptRef.current !== attemptId) return
-              chromeLocalStore
-                .removeItem('connectionPassword')
-                .match(
-                  () => {},
-                  (removeErr) => {
-                    logger.error(
-                      'Failed to remove connection password',
-                      removeErr,
-                    )
-                  }
-                )
-              connectorClient.disconnect()
-              navigate({
-                pathname: '/',
-                search: `?newWallet=${interaction.publicKey}&isKnownConnection=${isKnownConnection}`,
-              })
-            },
-            (err) => {
-              if (!isActive || attemptRef.current !== attemptId) return
-              logger.error('Failed to add or update connection', err)
-              setError('Failed to save connection. Please try again.')
-            }
-          )
+        connectionsClient.addOrUpdate(password, interaction).match(
+          ({ isKnownConnection }) => {
+            if (!isActive || attemptRef.current !== attemptId) return
+            chromeLocalStore.removeItem('connectionPassword').match(
+              () => {},
+              (removeErr) => {
+                logger.error('Failed to remove connection password', removeErr)
+              },
+            )
+            connectorClient.disconnect()
+            navigate({
+              pathname: '/',
+              search: `?newWallet=${interaction.publicKey}&isKnownConnection=${isKnownConnection}`,
+            })
+          },
+          (err) => {
+            if (!isActive || attemptRef.current !== attemptId) return
+            logger.error('Failed to add or update connection', err)
+            setError('Failed to save connection. Please try again.')
+          },
+        )
       }),
     )
 
@@ -149,10 +152,8 @@ export const Pairing = () => {
         (err) => {
           if (!isActive || attemptRef.current !== attemptId) return
           logger.error('Failed to generate connection password', err)
-          setError(
-            'Failed to generate connection password. Please try again.',
-          )
-        }
+          setError('Failed to generate connection password. Please try again.')
+        },
       )
 
     return () => {
@@ -167,7 +168,9 @@ export const Pairing = () => {
     <>
       {error ? (
         <Box textAlign="center" mt="lg">
-          <Text style={{ color: 'white', lineHeight: '23px', marginBottom: '16px' }}>
+          <Text
+            style={{ color: 'white', lineHeight: '23px', marginBottom: '16px' }}
+          >
             {error}
           </Text>
           <Button

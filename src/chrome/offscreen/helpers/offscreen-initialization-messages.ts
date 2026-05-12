@@ -1,7 +1,11 @@
 import { createMessage } from 'chrome/messages/create-message'
 import { MessageClient } from 'chrome/messages/message-client'
 import { ConnectorExtensionOptions, getExtensionOptions } from 'options'
-import { SessionId, WalletPublicKey, getSessionRouterData } from '../session-router'
+import {
+  SessionId,
+  WalletPublicKey,
+  getSessionRouterData,
+} from '../session-router'
 import { Connections } from 'pairing/state/connections'
 import { MessageSource } from 'chrome/messages/_types'
 import { getConnections } from 'chrome/helpers/get-connections'

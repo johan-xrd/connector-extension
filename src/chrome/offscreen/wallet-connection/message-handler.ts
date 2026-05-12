@@ -62,11 +62,7 @@ export const WalletConnectionMessageHandler = (input: {
       case messageDiscriminator.walletMessage: {
         if (isLedgerRequest(message.data)) {
           return sendMessageWithConfirmation(
-            createMessage.walletToLedger(
-              source,
-              message.data,
-              walletPublicKey,
-            ),
+            createMessage.walletToLedger(source, message.data, walletPublicKey),
           ).map(() => ({ sendConfirmation: false }))
         } else if (isExtensionMessage(message.data)) {
           return sendMessageWithConfirmation(
