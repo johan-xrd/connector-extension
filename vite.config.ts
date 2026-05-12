@@ -10,11 +10,8 @@ const { version } = packageJson
 const isDevToolsActive = process.env.VITE_DEV_TOOLS === 'true'
 const versionName = process.env.GITHUB_REF_NAME || 'local'
 
-// Convert from Semver (example: 0.1.0-beta6)
 const [major, minor, patch] = version
-  // can only contain digits, dots, or dash
   .replace(/[^\d.-]+/g, '')
-  // split into version parts
   .split(/[.-]/)
   .filter(Boolean)
 
@@ -87,20 +84,15 @@ const buildConfig: UserConfigExport = {
         options: 'src/options/index.html',
         ledger: 'src/ledger/index.html',
         pairing: 'src/pairing/index.html',
-        devTools: 'src/chrome/dev-tools/dev-tools.html',
+        ...(isDevToolsActive ? { devTools: 'src/chrome/dev-tools/dev-tools.html' } : {}),
         offscreen: 'src/chrome/offscreen/index.html',
       },
     },
   },
 }
 
-if (!isDevToolsActive) {
-  delete buildConfig.build.rollupOptions.input['devTools']
-}
-
 export default defineConfig({
   ...buildConfig,
-  // @ts-expect-error
   test: {
     globals: true,
     environment: 'jsdom',
