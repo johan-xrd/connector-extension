@@ -5,7 +5,7 @@ import { createChromeHandler } from 'trpc-chrome/adapter'
 import content from '../content-script/content-script?script'
 
 import { createOffscreen } from '../offscreen/create-offscreen'
-import { initWalletRuntime } from '../offscreen/wallet-runtime'
+import { initWalletRuntime, getWalletRuntime } from '../offscreen/wallet-runtime'
 import { BackgroundMessageHandler } from './message-handler'
 import { createMessage } from '../messages/create-message'
 import { MessageClient } from '../messages/message-client'
@@ -62,21 +62,27 @@ const handleStorageChange = (
   }
 
   if (changes['options'] && area === 'local') {
-    messageHandler.sendMessageAndWaitForConfirmation(
-      createMessage.setConnectorExtensionOptions(
-        'background',
-        changes['options'].newValue,
-      ),
+    const msg = createMessage.setConnectorExtensionOptions(
+      'background',
+      changes['options'].newValue,
     )
+    if (!hasOffscreen()) {
+      getWalletRuntime()?.messageClient.handleMessage(msg)
+    } else {
+      messageHandler.sendMessageAndWaitForConfirmation(msg)
+    }
   }
 
   if (changes['sessionRouter'] && area === 'local') {
-    messageHandler.sendMessageAndWaitForConfirmation(
-      createMessage.setSessionRouterData(
-        changes['sessionRouter'].newValue,
-        messageSource.background,
-      ),
+    const msg = createMessage.setSessionRouterData(
+      changes['sessionRouter'].newValue,
+      messageSource.background,
     )
+    if (!hasOffscreen()) {
+      getWalletRuntime()?.messageClient.handleMessage(msg)
+    } else {
+      messageHandler.sendMessageAndWaitForConfirmation(msg)
+    }
   }
 }
 
@@ -91,16 +97,25 @@ const messageHandler = MessageClient(
   { logger },
 )
 
-const handleConnectionsChange = (connections?: Connections) =>
+const handleConnectionsChange = (connections?: Connections) => {
+  const msg = createMessage.setConnections('background', connections || {})
+  
+  if (!hasOffscreen()) {
+    getWalletRuntime()?.messageClient.handleMessage(msg)
+    setTimeout(() => {
+      closePopup()
+    }, config.popup.closeDelayTime)
+    return
+  }
+
   messageHandler
-    .sendMessageAndWaitForConfirmation(
-      createMessage.setConnections('background', connections || {}),
-    )
+    .sendMessageAndWaitForConfirmation(msg)
     .map(() => {
       setTimeout(() => {
         closePopup()
       }, config.popup.closeDelayTime)
     })
+}
 
 const handleNotificationClick = (notificationId: string) => {
   if (notificationId.startsWith(txNotificationPrefix)) {
@@ -184,7 +199,7 @@ if (hasIdle()) {
 createOffscreen()
 
 if (!hasOffscreen()) {
-  initWalletRuntime()
+  initWalletRuntime('background')
 }
 
 createChromeHandler({

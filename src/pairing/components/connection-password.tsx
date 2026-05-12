@@ -15,9 +15,10 @@ export const ConnectionPassword = ({
   signature?: string
   purpose?: 'general'
 }) => {
+  const connectionsClient = useConnectionsClient()
+
   if (!connectionPassword || !publicKey || !signature) return null
 
-  const connectionsClient = useConnectionsClient()
   return (
     <>
       <PairingHeader
@@ -41,7 +42,6 @@ export const ConnectionPassword = ({
             signature,
             purpose,
           })}
-          data-testid="custom-element"
         />
       </Box>
 

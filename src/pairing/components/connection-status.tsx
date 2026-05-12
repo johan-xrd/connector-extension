@@ -37,14 +37,14 @@ export const ConnectionStatus = () => {
 
       setSearchParams({})
     }
-  }, [searchParams])
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     if (connectionsClient.isLoading()) return
     if (!connectionsClient.hasConnections()) {
       navigate('/pairing')
     }
-  }, [connections])
+  }, [connections, connectionsClient, navigate])
 
   const forgetWallet = () => {
     connectionsClient.remove(connectionIdToForget)

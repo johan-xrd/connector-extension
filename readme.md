@@ -57,6 +57,9 @@ npm run build
 ### Firefox Development
 
 1. Build for Firefox: `npm run build:firefox`
+   - *Note*: `npm run build:firefox` is a local/dev build and uses development signaling unless options override it.
+   - For real Android wallet testing, use `npm run build:firefox:prod` or set `VITE_GITHUB_REF_NAME=main`.
+   - The symptom of wrong/dev signaling is repeated Firefox WebSocket errors to `signaling-server-dev...`.
 2. Install [web-ext](https://extensionworkshop.com/documentation/develop/getting-started-with-web-ext/): `npm install`
 3. Load in Firefox:
    - Go to `about:debugging#/runtime/this-firefox`

@@ -16,8 +16,6 @@ export type WalletRuntime = {
 
 let runtimeInstance: WalletRuntime | null = null
 
-export const getWalletRuntime = () => runtimeInstance
-
 export const initWalletRuntime = (source: MessageSource = 'offScreen') => {
   if (runtimeInstance) {
     if (runtimeInstance.source !== source) {
@@ -78,7 +76,6 @@ export const initWalletRuntime = (source: MessageSource = 'offScreen') => {
     destroy: () => {
       chrome.runtime.onMessage.removeListener(messageListener)
       messageClient.destroy()
-      runtimeInstance = null
     },
   }
 

@@ -52,6 +52,7 @@ const createTestHelper = ({
       sessionRouter: SessionRouter(),
       logger,
       walletPublicKey: 'random-mock-client-id',
+      source: 'offScreen',
     }),
     'offScreen',
     createInput(messageClientSubjects),
@@ -83,6 +84,7 @@ const createTestHelper = ({
         ],
       ]),
       walletConnectionClientFactory: () => ({}) as any,
+      source: 'offScreen',
     } as any),
     'offScreen',
     {

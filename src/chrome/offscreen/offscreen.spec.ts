@@ -33,6 +33,7 @@ const createTestSuite = () => {
         })
       },
       logsClient,
+      source: 'offScreen',
     }),
     'offScreen',
     {

@@ -12,7 +12,8 @@ export const LogsClient = (
   },
 ) => {
   let browser: string
-  const element = document.getElementById(htmlElementId)
+  const hasDocument = typeof document !== 'undefined'
+  const element = hasDocument ? document.getElementById(htmlElementId) : null
   const logs: string[] = []
   return {
     add: (logObj: Log) => {
@@ -35,14 +36,17 @@ export const LogsClient = (
         .join(' ')}`
 
       logs.push(log)
-      element?.prepend(log)
-      element?.prepend(document.createElement('br'))
+      if (element) {
+        element.prepend(log)
+        element.prepend(document.createElement('br'))
+      }
 
       if (logs.length > maxLogsLength) {
         logs.shift()
       }
     },
     download: () => {
+      if (!hasDocument) return
       const element = document.createElement('a')
       element.setAttribute(
         'href',

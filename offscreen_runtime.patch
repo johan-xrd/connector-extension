@@ -1,0 +1,11 @@
+--- src/chrome/offscreen/wallet-runtime.ts
++++ src/chrome/offscreen/wallet-runtime.ts
+@@ -19,6 +19,8 @@
+ 
+ let runtimeInstance: WalletRuntime | null = null
+ 
++export const getWalletRuntime = () => runtimeInstance
++
+ export const initWalletRuntime = (source: MessageSource = 'offScreen') => {
+   if (runtimeInstance) {
+     if (runtimeInstance.source !== source) {

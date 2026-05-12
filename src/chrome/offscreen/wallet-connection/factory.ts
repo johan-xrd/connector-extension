@@ -7,6 +7,7 @@ import { syncClient } from './sync-client'
 import { Connection } from 'pairing/state/connections'
 import { SessionRouter } from '../session-router'
 import type { ConnectorExtensionOptions } from 'options'
+import { MessageSource } from 'chrome/messages/_types'
 
 export type walletConnectionClientFactory = typeof walletConnectionClientFactory
 
@@ -19,12 +20,15 @@ export const walletConnectionClientFactory = (input: {
   connectorExtensionOptions?: ConnectorExtensionOptions
   connectorClient?: ConnectorClient
   messagesRouter?: MessagesRouter
+  source?: MessageSource
 }): WalletConnectionClient => {
   const messagesRouter = input.messagesRouter || MessagesRouter()
 
   const logger = input.logger.getSubLogger({
     name: `[WCC]:[${input.connection.walletName}]`,
   })
+
+  const source = input.source || 'offScreen'
 
   const connectorClient =
     input.connectorClient ||
@@ -44,6 +48,7 @@ export const walletConnectionClientFactory = (input: {
     walletPublicKey: input.connection.walletPublicKey,
     sessionRouter,
     logger,
+    source,
   })
 
   if (input.connectorExtensionOptions) {

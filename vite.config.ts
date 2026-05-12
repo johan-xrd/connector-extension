@@ -49,10 +49,9 @@ const manifest = defineManifest(async () => {
     action: {
       default_popup: 'src/pairing/index.html',
     },
-    background: {
-      service_worker: `src/chrome/background/background.ts`,
-      type: 'module',
-    },
+    background: isFirefox
+      ? { scripts: ['src/chrome/background/background.ts'] }
+      : { service_worker: 'src/chrome/background/background.ts', type: 'module' },
     content_scripts: [
       {
         matches,
@@ -77,6 +76,10 @@ const manifest = defineManifest(async () => {
         id: 'connector-extension@radixdlt.com',
         strict_min_version: '128.0',
       },
+    }
+    baseManifest.content_security_policy = {
+      extension_pages:
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://* wss://*; img-src 'self' data:; font-src 'self' data:; object-src 'none';",
     }
   }
 

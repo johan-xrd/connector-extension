@@ -11,7 +11,7 @@ import { AppLogger, logger as utilsLogger } from 'utils/logger'
 import { Worker } from 'queues/worker'
 import { MessageClient } from 'chrome/messages/message-client'
 import { WalletConnectionMessageHandler } from './message-handler'
-import { Message } from 'chrome/messages/_types'
+import { Message, MessageSource } from 'chrome/messages/_types'
 import { Subscription } from 'rxjs'
 import { SyncClient } from './sync-client'
 import { SessionRouter } from '../session-router'
@@ -28,6 +28,7 @@ export const WalletConnectionClient = ({
   connectorClient,
   walletPublicKey,
   sessionRouter,
+  source = 'offScreen' as MessageSource,
 }: {
   connectionPassword: string
   messagesRouter: MessagesRouter
@@ -36,6 +37,7 @@ export const WalletConnectionClient = ({
   connectorClient: ConnectorClient
   walletPublicKey: string
   sessionRouter: SessionRouter
+  source?: MessageSource
 }) => {
   logger.info('WalletConnectionClient created', walletPublicKey)
   connectorClient.setConnectionPassword(Buffer.from(connectionPassword, 'hex'))
@@ -54,7 +56,7 @@ export const WalletConnectionClient = ({
               .andThen((metadata) =>
                 messageClient.sendMessageAndWaitForConfirmation(
                   createMessage.sendMessageEventToDapp(
-                    'offScreen',
+                    source,
                     'receivedByWallet',
                     { interactionId: job.data.interactionId, metadata },
                   ),
@@ -153,8 +155,9 @@ export const WalletConnectionClient = ({
       sessionRouter,
       logger,
       walletPublicKey,
+      source,
     }),
-    'offScreen',
+    source,
     { logger },
   )
 
