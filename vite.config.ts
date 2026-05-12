@@ -2,6 +2,7 @@
 import { defineConfig, UserConfigExport } from 'vite'
 import react from '@vitejs/plugin-react'
 import { crx, defineManifest } from '@crxjs/vite-plugin'
+import tsconfigPaths from 'vite-tsconfig-paths'
 import packageJson from './package.json'
 
 const { version } = packageJson
@@ -64,9 +65,8 @@ const manifest = defineManifest(async () => {
 })
 
 const buildConfig: UserConfigExport = {
-  plugins: [react(), crx({ manifest })],
+  plugins: [react(), crx({ manifest }), tsconfigPaths()],
   resolve: {
-    tsconfigPaths: true,
     alias: {
       stream: 'vite-compatible-readable-stream',
     },
