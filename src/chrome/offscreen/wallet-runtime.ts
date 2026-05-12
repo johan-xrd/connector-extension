@@ -1,0 +1,87 @@
+import { logger as utilsLogger } from 'utils/logger'
+import { OffscreenMessageHandler } from 'chrome/offscreen/message-handler'
+import { MessageClient } from 'chrome/messages/message-client'
+import { Message, MessageSource } from 'chrome/messages/_types'
+import { LogsClient } from './logs-client'
+import { WalletConnectionClient } from './wallet-connection/wallet-connection-client'
+import { walletConnectionClientFactory } from './wallet-connection/factory'
+import { OffscreenInitializationMessages } from './helpers/offscreen-initialization-messages'
+
+export type WalletRuntime = {
+  source: MessageSource
+  connections: Map<string, WalletConnectionClient>
+  messageClient: MessageClient
+  destroy: () => void
+}
+
+let runtimeInstance: WalletRuntime | null = null
+
+export const getWalletRuntime = () => runtimeInstance
+
+export const initWalletRuntime = (source: MessageSource = 'offScreen') => {
+  if (runtimeInstance) {
+    if (runtimeInstance.source !== source) {
+      utilsLogger
+        .getSubLogger({ name: 'initWalletRuntime' })
+        .warn(
+          `initWalletRuntime called with source '${source}' but already initialized as '${runtimeInstance.source}', ignoring duplicate initialization`,
+        )
+    }
+    return runtimeInstance
+  }
+
+  const logsClient = LogsClient()
+
+  utilsLogger.attachTransport((logObj) => {
+    logsClient.add(logObj)
+  })
+
+  const logger = utilsLogger.getSubLogger({ name: source })
+
+  const connections = new Map<string, WalletConnectionClient>()
+
+  const messageClient = MessageClient(
+    OffscreenMessageHandler({
+      connectionsMap: connections,
+      logger,
+      walletConnectionClientFactory,
+      logsClient,
+      source,
+    }),
+    source,
+    { logger },
+  )
+
+  const messageListener = (
+    message: Message,
+    sender: chrome.runtime.MessageSender,
+  ) => {
+    messageClient.onMessage(message, sender.tab?.id)
+  }
+
+  if (source === 'background') {
+    logger.debug('wallet runtime started in background host mode')
+  }
+
+  chrome.runtime.onMessage.addListener(messageListener)
+
+  const messages = OffscreenInitializationMessages(messageClient, source)
+
+  messages.options()
+  messages.sessionRouterData()
+  messages.connections()
+
+  const runtime = {
+    source,
+    connections,
+    messageClient,
+    destroy: () => {
+      chrome.runtime.onMessage.removeListener(messageListener)
+      messageClient.destroy()
+      runtimeInstance = null
+    },
+  }
+
+  runtimeInstance = runtime
+  return runtime
+}

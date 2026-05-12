@@ -2,6 +2,7 @@ import { MessageLifeCycleEvent, dAppEvent } from 'chrome/dapp/_types'
 import { ok } from 'neverthrow'
 
 import { AppLogger } from 'utils/logger'
+import { safeCloneInto } from 'utils/safe-clone-into'
 import { addOriginToWalletInteraction } from 'chrome/helpers/add-origin-to-wallet-interaction'
 import { safeParse } from 'valibot'
 import {
@@ -18,7 +19,7 @@ export const ChromeDAppClient = (logger: AppLogger) => {
   const sendMessage = (message: Record<string, any>) => {
     window.dispatchEvent(
       new CustomEvent(dAppEvent.receive, {
-        detail: message,
+        detail: safeCloneInto(message, window),
       }),
     )
     return ok(true)

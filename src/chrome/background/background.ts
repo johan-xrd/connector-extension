@@ -5,6 +5,10 @@ import { createChromeHandler } from 'trpc-chrome/adapter'
 import content from '../content-script/content-script?script'
 
 import { createOffscreen } from '../offscreen/create-offscreen'
+import {
+  initWalletRuntime,
+  getWalletRuntime,
+} from '../offscreen/wallet-runtime'
 import { BackgroundMessageHandler } from './message-handler'
 import { createMessage } from '../messages/create-message'
 import { MessageClient } from '../messages/message-client'
@@ -27,6 +31,7 @@ import { createBackgroundRouterContext } from './router/context'
 import { createContentScriptClient } from './router/clients/content-script'
 import { getOffscreenClient } from './router/clients/offscreen'
 import { hasConnections } from 'chrome/helpers/get-connections'
+import { hasIdle, hasOffscreen } from 'utils/browser-detect'
 
 const logger = utilsLogger.getSubLogger({ name: 'background' })
 
@@ -60,21 +65,27 @@ const handleStorageChange = (
   }
 
   if (changes['options'] && area === 'local') {
-    messageHandler.sendMessageAndWaitForConfirmation(
-      createMessage.setConnectorExtensionOptions(
-        'background',
-        changes['options'].newValue,
-      ),
+    const msg = createMessage.setConnectorExtensionOptions(
+      'background',
+      changes['options'].newValue,
     )
+    if (!hasOffscreen()) {
+      getWalletRuntime()?.messageClient.handleMessage(msg)
+    } else {
+      messageHandler.sendMessageAndWaitForConfirmation(msg)
+    }
   }
 
   if (changes['sessionRouter'] && area === 'local') {
-    messageHandler.sendMessageAndWaitForConfirmation(
-      createMessage.setSessionRouterData(
-        changes['sessionRouter'].newValue,
-        messageSource.background,
-      ),
+    const msg = createMessage.setSessionRouterData(
+      changes['sessionRouter'].newValue,
+      messageSource.background,
     )
+    if (!hasOffscreen()) {
+      getWalletRuntime()?.messageClient.handleMessage(msg)
+    } else {
+      messageHandler.sendMessageAndWaitForConfirmation(msg)
+    }
   }
 }
 
@@ -89,16 +100,23 @@ const messageHandler = MessageClient(
   { logger },
 )
 
-const handleConnectionsChange = (connections?: Connections) =>
-  messageHandler
-    .sendMessageAndWaitForConfirmation(
-      createMessage.setConnections('background', connections || {}),
-    )
-    .map(() => {
-      setTimeout(() => {
-        closePopup()
-      }, config.popup.closeDelayTime)
-    })
+const handleConnectionsChange = (connections?: Connections) => {
+  const msg = createMessage.setConnections('background', connections || {})
+
+  if (!hasOffscreen()) {
+    getWalletRuntime()?.messageClient.handleMessage(msg)
+    setTimeout(() => {
+      closePopup()
+    }, config.popup.closeDelayTime)
+    return
+  }
+
+  messageHandler.sendMessageAndWaitForConfirmation(msg).map(() => {
+    setTimeout(() => {
+      closePopup()
+    }, config.popup.closeDelayTime)
+  })
+}
 
 const handleNotificationClick = (notificationId: string) => {
   if (notificationId.startsWith(txNotificationPrefix)) {
@@ -170,12 +188,20 @@ chrome.contextMenus.onClicked.addListener((data) => {
   }
 })
 
-chrome.idle.onStateChanged.addListener((state) => {
-  logger.debug('💻 onStateChanged:', state)
-  if (state === 'active') sendMessage(createMessage.restartConnector())
-})
+if (hasIdle()) {
+  chrome.idle.onStateChanged.addListener((state) => {
+    logger.debug('💻 onStateChanged:', state)
+    if (state === 'active') sendMessage(createMessage.restartConnector())
+  })
+} else {
+  logger.warn('chrome.idle API not available; idle detection disabled')
+}
 
 createOffscreen()
+
+if (!hasOffscreen()) {
+  initWalletRuntime('background')
+}
 
 createChromeHandler({
   router: backgroundRouter,

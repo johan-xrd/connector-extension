@@ -1,8 +1,14 @@
 import { createMessage } from 'chrome/messages/create-message'
 import { MessageClient } from 'chrome/messages/message-client'
-import { ConnectorExtensionOptions } from 'options'
-import { SessionId, WalletPublicKey } from '../session-router'
+import { ConnectorExtensionOptions, getExtensionOptions } from 'options'
+import {
+  SessionId,
+  WalletPublicKey,
+  getSessionRouterData,
+} from '../session-router'
 import { Connections } from 'pairing/state/connections'
+import { MessageSource } from 'chrome/messages/_types'
+import { getConnections } from 'chrome/helpers/get-connections'
 
 /**
  * This section of code handles the retrieval of important data from the background page
@@ -18,38 +24,63 @@ import { Connections } from 'pairing/state/connections'
  */
 export const OffscreenInitializationMessages = (
   messageClient: MessageClient,
+  source: MessageSource = 'offScreen',
 ) => {
   return {
     options: () => {
+      if (source === 'background') {
+        getExtensionOptions().map((options) => {
+          messageClient.handleMessage(
+            createMessage.setConnectorExtensionOptions(source, options),
+          )
+        })
+        return
+      }
       messageClient
         .sendMessageAndWaitForConfirmation<{
           options: ConnectorExtensionOptions
-        }>(createMessage.getExtensionOptions('offScreen'))
+        }>(createMessage.getExtensionOptions(source))
         .andThen(({ options }) =>
           messageClient.handleMessage(
-            createMessage.setConnectorExtensionOptions('offScreen', options),
+            createMessage.setConnectorExtensionOptions(source, options),
           ),
         )
     },
     sessionRouterData: () => {
+      if (source === 'background') {
+        getSessionRouterData().map((sessionRouter) => {
+          messageClient.handleMessage(
+            createMessage.setSessionRouterData(sessionRouter, source),
+          )
+        })
+        return
+      }
       messageClient
         .sendMessageAndWaitForConfirmation<Record<SessionId, WalletPublicKey>>(
           createMessage.getSessionRouterData(),
         )
         .andThen((sessionRouter) =>
           messageClient.handleMessage(
-            createMessage.setSessionRouterData(sessionRouter, 'offScreen'),
+            createMessage.setSessionRouterData(sessionRouter, source),
           ),
         )
     },
     connections: () => {
+      if (source === 'background') {
+        getConnections().map((connections) => {
+          messageClient.handleMessage(
+            createMessage.setConnections(source, connections),
+          )
+        })
+        return
+      }
       messageClient
         .sendMessageAndWaitForConfirmation<Connections>(
-          createMessage.getConnections('offScreen'),
+          createMessage.getConnections(source),
         )
         .andThen((connections) =>
           messageClient.handleMessage(
-            createMessage.setConnections('offScreen', connections),
+            createMessage.setConnections(source, connections),
           ),
         )
     },

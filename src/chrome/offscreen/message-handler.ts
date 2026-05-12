@@ -7,6 +7,7 @@ import {
   messageDiscriminator,
   MessageHandler,
   MessageHandlerOutput,
+  MessageSource,
 } from '../messages/_types'
 import { WalletConnectionClient } from './wallet-connection/wallet-connection-client'
 import { getConnectionConfig } from 'config'
@@ -23,11 +24,13 @@ export const OffscreenMessageHandler = (input: {
   connectionsMap: Map<string, WalletConnectionClient>
   walletConnectionClientFactory: walletConnectionClientFactory
   logger?: AppLogger
+  source?: MessageSource
 }): MessageHandler => {
   let currentExtensionOptions: ConnectorExtensionOptions | undefined
   const logsClient = input.logsClient
   const logger = input.logger
   const connectionsMap = input.connectionsMap
+  const source = input.source || 'offScreen'
 
   const destroyNonExistingConnections = (connections: Connections) => {
     // Destroy & remove "WalletConnectionClient"s which do not have corresponding entry in connections configuration
@@ -64,6 +67,7 @@ export const OffscreenMessageHandler = (input: {
         connection,
         logger: input.logger || appLogger,
         connectorExtensionOptions: currentExtensionOptions,
+        source,
       }),
     )
   }

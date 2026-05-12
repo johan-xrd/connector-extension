@@ -18,6 +18,7 @@ import {
   Message,
   MessageHandler,
   MessageHandlerOutput,
+  MessageSource,
   SendMessageWithConfirmation,
   messageDiscriminator,
 } from 'chrome/messages/_types'
@@ -40,6 +41,7 @@ export const WalletConnectionMessageHandler = (input: {
   sessionRouter: SessionRouter
   logger?: AppLogger
   walletPublicKey: string
+  source?: MessageSource
 }): MessageHandler => {
   const dAppRequestQueue = input.dAppRequestQueue
   const extensionToWalletQueue = input.extensionToWalletQueue
@@ -47,6 +49,7 @@ export const WalletConnectionMessageHandler = (input: {
   const messagesRouter = input.messagesRouter
   const sessionRouter = input.sessionRouter
   const walletPublicKey = input.walletPublicKey
+  const source = input.source || 'offScreen'
   const logger = input.logger || appLogger
 
   return (
@@ -59,16 +62,12 @@ export const WalletConnectionMessageHandler = (input: {
       case messageDiscriminator.walletMessage: {
         if (isLedgerRequest(message.data)) {
           return sendMessageWithConfirmation(
-            createMessage.walletToLedger(
-              'offScreen',
-              message.data,
-              walletPublicKey,
-            ),
+            createMessage.walletToLedger(source, message.data, walletPublicKey),
           ).map(() => ({ sendConfirmation: false }))
         } else if (isExtensionMessage(message.data)) {
           return sendMessageWithConfirmation(
             createMessage.walletToExtension(
-              'offScreen',
+              source,
               message.data,
               walletPublicKey,
             ),
@@ -90,7 +89,7 @@ export const WalletConnectionMessageHandler = (input: {
           .andThen(() =>
             sendMessageWithConfirmation(
               createMessage.sendMessageEventToDapp(
-                'offScreen',
+                source,
                 'requestCancelSuccess',
                 { interactionId, metadata },
               ),
@@ -121,7 +120,7 @@ export const WalletConnectionMessageHandler = (input: {
                 .andThen(() =>
                   sendMessageWithConfirmation(
                     createMessage.sendMessageEventToDapp(
-                      'offScreen',
+                      source,
                       'requestCancelSuccess',
                       { interactionId, metadata },
                     ),
@@ -161,7 +160,7 @@ export const WalletConnectionMessageHandler = (input: {
                 .andThen(() =>
                   sendMessageWithConfirmation(
                     createMessage.sendMessageEventToDapp(
-                      'offScreen',
+                      source,
                       'requestCancelSuccess',
                       { interactionId, metadata },
                     ),
@@ -189,7 +188,7 @@ export const WalletConnectionMessageHandler = (input: {
           .andThen((metadata) => {
             sendMessage(
               // this is for background script to handle notifications
-              createMessage.walletResponse('offScreen', {
+              createMessage.walletResponse(source, {
                 ...message.data,
                 metadata: {
                   networkId: metadata.networkId,
@@ -200,7 +199,7 @@ export const WalletConnectionMessageHandler = (input: {
             )
             return sendMessageWithConfirmation(
               // this is targeted to particular dApp
-              createMessage.walletResponse('offScreen', {
+              createMessage.walletResponse(source, {
                 walletResponse: message.data,
                 metadata,
               }),

@@ -1,0 +1,51 @@
+--- src/chrome/offscreen/helpers/offscreen-initialization-messages.ts
++++ src/chrome/offscreen/helpers/offscreen-initialization-messages.ts
+@@ -1,8 +1,9 @@
+ import { createMessage } from 'chrome/messages/create-message'
+ import { MessageClient } from 'chrome/messages/message-client'
+-import { ConnectorExtensionOptions } from 'options'
+-import { SessionId, WalletPublicKey } from '../session-router'
++import { ConnectorExtensionOptions, getExtensionOptions } from 'options'
++import { SessionId, WalletPublicKey, getSessionRouterData } from '../session-router'
+ import { Connections } from 'pairing/state/connections'
+ import { MessageSource } from 'chrome/messages/_types'
++import { getConnections } from 'chrome/helpers/get-connections'
+ 
+ /**
+@@ -21,6 +22,12 @@
+ ) => {
+   return {
+     options: () => {
++      if (source === 'background') {
++        getExtensionOptions().map((options) => {
++          messageClient.handleMessage(createMessage.setConnectorExtensionOptions(source, options))
++        })
++        return
++      }
+       messageClient
+         .sendMessageAndWaitForConfirmation<{
+           options: ConnectorExtensionOptions
+@@ -34,6 +41,12 @@
+     },
+     sessionRouterData: () => {
++      if (source === 'background') {
++        getSessionRouterData().map((sessionRouter) => {
++          messageClient.handleMessage(createMessage.setSessionRouterData(sessionRouter, source))
++        })
++        return
++      }
+       messageClient
+         .sendMessageAndWaitForConfirmation<Record<SessionId, WalletPublicKey>>(
+           createMessage.getSessionRouterData(),
+@@ -46,6 +59,12 @@
+     },
+     connections: () => {
++      if (source === 'background') {
++        getConnections().map((connections) => {
++          messageClient.handleMessage(createMessage.setConnections(source, connections))
++        })
++        return
++      }
+       messageClient
+         .sendMessageAndWaitForConfirmation<Connections>(
+           createMessage.getConnections(source),
